@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AgriHealth - Plant Disease Detection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-green: #2d5016;
+            --secondary-green: #4a7023;
+            --accent-green: #6fa634;
+            --light-green: #e8f5e9;
+            --very-light-green: #f1f8e9;
+            --earth-brown: #6d4c41;
+            --gold: #d4af37;
+            --text-dark: #1b3d1f;
+            --text-light: #555555;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--very-light-green);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+        
+        /* Header Navigation */
+        header {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+            color: var(--white);
+            padding: 0.8rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+        
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        
+        .logo:hover {
+            color: var(--gold);
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            background-color: var(--accent-green);
+            color: var(--gold);
+        }
+        
+        /* Sections */
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Landing Page */
+        .landing {
+            background: linear-gradient(rgba(45, 80, 22, 0.7), rgba(45, 80, 22, 0.7)),
+                        url('{{ url_for("static", filename="hero-background.png") }}') center/cover;
+            min-height: calc(100vh - 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .landing-content {
+            max-width: 700px;
+        }
+        
+        .landing h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .landing p {
+            font-size: 1.3rem;
+            margin-bottom: 2.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-green);
+            color: var(--white);
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--gold);
+            color: var(--primary-green);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+        
+        /* Predictor Page */
+        .predictor {
+            min-height: calc(100vh - 60px);
+            padding: 3rem 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--primary-green);
+        }
+        
+        .page-title h2 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .predictor-container {
+            background: var(--white);
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        
+        .upload-area {
+            border: 3px dashed var(--accent-green);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            background-color: var(--very-light-green);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--gold);
+            background-color: #f0fde4;
+            transform: scale(1.02);
+        }
+        
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .upload-area p {
+            color: var(--text-dark);
+            font-size: 1.1rem;
+            margin: 0.5rem 0;
+        }
+        
+        #image-box {
+            margin: 2rem 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+            border-radius: 12px;
+            background: var(--very-light-green);
+        }
+        
+        #preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        #results {
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--very-light-green) 0%, var(--light-green) 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            border-left: 5px solid var(--accent-green);
+        }
+        
+        #results.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        #results h3 {
+            color: var(--primary-green);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        #prediction-list {
+            list-style: none;
+        }
+        
+        #prediction-list li {
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            background: var(--white);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--accent-green);
+        }
+        
+        .confidence {
+            background: linear-gradient(135deg, var(--accent-green) 0%, var(--secondary-green) 100%);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        /* Dashboard */
+        .dashboard {
+            min-height: calc(100vh - 60px);
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, var(--very-light-green) 0%, var(--light-green) 100%);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .stat-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            border-top: 4px solid var(--accent-green);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            color: var(--accent-green);
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .info-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        
+        .info-card h4 {
+            color: var(--primary-green);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .info-card p {
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+        
+        /* About Us */
+        .about {
+            min-height: calc(100vh - 60px);
+            padding: 3rem 2rem;
+        }
+        
+        .about-content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            margin: 3rem 0;
+        }
+        
+        .about-image {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .about-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .about-text h3 {
+            color: var(--primary-green);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .about-text p {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+        
+        .features-list {
+            list-style: none;
+            margin-top: 2rem;
+        }
+        
+        .features-list li {
+            padding: 0.8rem 0;
+            padding-left: 2rem;
+            position: relative;
+            color: var(--text-dark);
+        }
+        
+        .features-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent-green);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .landing h1 {
+                font-size: 2rem;
+            }
+            
+            .about-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .predictor-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <header>
+        <nav>
+            <div class="logo" onclick="showSection('landing')">🌱 AgriHealth</div>
+            <ul class="nav-links">
+                <li><a href="#" onclick="showSection('landing'); return false;" class="nav-link active">Home</a></li>
+                <li><a href="#" onclick="showSection('predictor'); return false;" class="nav-link">Predictor</a></li>
+                <li><a href="#" onclick="showSection('dashboard'); return false;" class="nav-link">Dashboard</a></li>
+                <li><a href="#" onclick="showSection('about'); return false;" class="nav-link">About Us</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Landing Page -->
+    <section class="section active landing" id="landing">
+        <div class="landing-content">
+            <h1>🌾 AgriHealth</h1>
+            <p>Detect Plant Diseases with Advanced AI Technology</p>
+            <button class="btn-primary" onclick="showSection('predictor')">Start Detection</button>
+        </div>
+    </section>
+
+    <!-- Predictor Page -->
+    <section class="section predictor" id="predictor">
+        <div class="container">
+            <div class="page-title">
+                <h2>🔍 Plant Disease Predictor</h2>
+                <p>Upload an image of your plant leaf to detect any diseases</p>
+            </div>
+            
+            <div class="predictor-container">
+                <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                    <div class="upload-icon">📸</div>
+                    <p>Click to upload or drag and drop</p>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">PNG, JPG, GIF up to 10MB</p>
+                </div>
+                <input type="file" id="file-input" accept="image/*">
+                
+                <div id="image-box">
+                    <img id="preview" src="" alt="Image preview" style="display:none;">
+                </div>
+
+                <div id="results">
+                    <h3>📊 Prediction Results:</h3>
+                    <ul id="prediction-list"></ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section class="section dashboard" id="dashboard">
+        <div class="container">
+            <div class="page-title">
+                <h2>📈 Dashboard</h2>
+                <p>Monitor your agricultural health status</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div style="font-size: 2rem;">🌿</div>
+                    <div class="stat-number">99.2%</div>
+                    <div class="stat-label">Detection Accuracy</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 2rem;">✅</div>
+                    <div class="stat-number">+35</div>
+                    <div class="stat-label">Plant Types Supported</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 2rem;">🔍</div>
+                    <div class="stat-number">100+</div>
+                    <div class="stat-label">Disease Classifications</div>
+                </div>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🎯 Key Features</h4>
+                    <p>Advanced neural network models trained on thousands of plant leaf images for accurate disease detection and classification.</p>
+                </div>
+                <div class="info-card">
+                    <h4>⚡ Real-time Processing</h4>
+                    <p>Get instant results with our optimized AI model. Complete analysis in seconds with detailed confidence scores.</p>
+                </div>
+                <div class="info-card">
+                    <h4>📱 Easy to Use</h4>
+                    <p>Simple upload interface. Just snap a photo of your plant leaf and let our AI do the analysis for you.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Us -->
+    <section class="section about" id="about">
+        <div class="about-content">
+            <div class="page-title">
+                <h2>About AgriHealth</h2>
+                <p>Empowering Farmers with Technology</p>
+            </div>
+            
+            <div class="about-grid">
+                <div class="about-image">
+                    <img src="{{ url_for('static', filename='about-image.png') }}" alt="Agricultural Innovation">
+                </div>
+                <div class="about-text">
+                    <h3>Our Mission</h3>
+                    <p>AgriHealth is dedicated to revolutionizing agriculture through artificial intelligence. We empower farmers and agricultural professionals with cutting-edge technology to detect plant diseases early and take preventive action.</p>
+                    <p>Our deep learning models are trained on extensive plant disease datasets, ensuring high accuracy and reliability in disease detection across various crop types.</p>
+                    <ul class="features-list">
+                        <li>Advanced AI Disease Detection</li>
+                        <li>Multiple Plant Type Support</li>
+                        <li>Real-time Analysis</li>
+                        <li>Mobile-Friendly Interface</li>
+                        <li>Detailed Confidence Metrics</li>
+                        <li>Sustainable Agriculture Focus</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="margin-top: 3rem; background: var(--white); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow);">
+                <h3 style="color: var(--primary-green); margin-bottom: 1rem;">Why Choose AgriHealth?</h3>
+                <p style="color: var(--text-light); margin-bottom: 1rem;">By leveraging machine learning and neural networks, AgriHealth provides farmers with a cost-effective solution for disease detection and management. Early detection leads to better crop health, higher yields, and reduced pesticide usage.</p>
+                <p style="color: var(--text-light);">Our platform continues to improve as we collect more data, ensuring that your experience gets better over time.</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Navigation and Section Management
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to corresponding nav link
+            event.target.classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Predictor Functionality
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('preview');
+        const resultsDiv = document.getElementById('results');
+        const predictionList = document.getElementById('prediction-list');
+
+        // Drag and drop support
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--gold)';
+            uploadArea.style.backgroundColor = '#f0fde4';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'var(--accent-green)';
+            uploadArea.style.backgroundColor = 'var(--very-light-green)';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--accent-green)';
+            uploadArea.style.backgroundColor = 'var(--very-light-green)';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect({ target: { files: files } });
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Show image preview
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+
+            // Prepare data to send to the backend
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Show loading message
+            resultsDiv.classList.add('visible');
+            predictionList.innerHTML = '<li><strong>🔄 Analyzing image, please wait...</strong></li>';
+
+            // Send the image to the Flask backend
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Display the prediction results
+                predictionList.innerHTML = '';
+                if (data.error) {
+                    predictionList.innerHTML = `<li style="color: #c62828;"><strong>Error:</strong> ${data.details || data.error}</li>`;
+                } else {
+                    data.predictions.forEach((p, index) => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `<strong>${p.label}</strong> <span class="confidence">${p.confidence}</span>`;
+                        predictionList.appendChild(listItem);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+                predictionList.innerHTML = `<li style="color: #c62828;"><strong>Error:</strong> Failed to connect to the server. Please ensure it's running.</li>`;
+            });
+        }
+    </script>
+</body>
+</html>
