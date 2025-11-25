@@ -22,9 +22,11 @@ try:
     model = tf.keras.models.load_model("trained_model.h5", compile=False)
     with open("class_names.json", "r") as f:
         class_names = json.load(f)
-    print("Model and class names loaded successfully.")
+    with open("disease_info.json", "r") as f:
+        disease_info = json.load(f)
+    print("Model, class names, and disease info loaded successfully.")
 except Exception as e:
-    print(f"Error: Could not load model or class_names.json. Make sure they are in the correct folder.")
+    print(f"Error: Could not load required files. Make sure they are in the correct folder.")
     print(f"Details: {e}")
     exit()
 
@@ -60,18 +62,26 @@ def predict():
         # 3. Make a prediction
         predictions = model.predict(input_arr)[0]
         
-        # 4. === THE CHANGE IS HERE: Find the single best prediction ===
+        # 4. Find the single best prediction and include disease info
         # Get the index of the highest probability
         top_index = np.argmax(predictions)
+        disease_name = class_names[top_index]
         
-        # Create a dictionary with just that one result
+        # Get disease information
+        disease_details = disease_info.get(disease_name, {
+            "symptoms": "No specific information available.",
+            "treatment": "Consult with a plant pathologist or agricultural expert."
+        })
+        
+        # Create a dictionary with prediction and disease info
         result = {
-            "label": class_names[top_index], 
-            "confidence": f"{predictions[top_index] * 100:.2f}%"
+            "label": disease_name,
+            "confidence": f"{predictions[top_index] * 100:.2f}%",
+            "symptoms": disease_details["symptoms"],
+            "treatment": disease_details["treatment"]
         }
         
-        # 5. Send the single result back inside a list
-        # We keep it in a list so the frontend JavaScript doesn't break
+        # 5. Send the result back
         return jsonify({"predictions": [result]})
 
     except Exception as e:
